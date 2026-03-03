@@ -1,11 +1,10 @@
 FROM node:14-alpine AS build
-RUN git clone -b "QE-Live-Midnight" https://github.com/Voulk/QuestionablyEpic 
-WORKDIR /QuestionablyEpic
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
+WORKDIR /app
 ENV CI=false
+
+RUN apk add --no-cache git
+RUN git clone -b "QE-Live-Midnight" https://github.com/Voulk/QuestionablyEpic 
+RUN npm ci
 RUN npm run build
 
 FROM nginx:alpine-slim
