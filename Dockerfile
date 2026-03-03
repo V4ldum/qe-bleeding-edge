@@ -1,7 +1,6 @@
 FROM node:14-alpine AS build
-WORKDIR /app
-
 RUN git clone -b "QE-Live-Midnight" https://github.com/Voulk/QuestionablyEpic 
+WORKDIR QuestionablyEpic
 
 COPY package.json package-lock.json ./
 RUN npm ci
