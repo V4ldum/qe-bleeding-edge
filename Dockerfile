@@ -3,7 +3,7 @@ WORKDIR /app
 ENV CI=false
 
 RUN apk add --no-cache git
-RUN git clone -b "QE-Live-Midnight" https://github.com/Voulk/QuestionablyEpic .
+RUN git clone -b "dev" https://github.com/Voulk/QuestionablyEpic .
 RUN npm ci
 RUN npm run build
 
