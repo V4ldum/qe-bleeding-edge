@@ -14,10 +14,41 @@ concurrency:
 
 env:
     PROJECT: "qe"
-    
+
 jobs:
+    check-upstream:
+      runs-on: ubuntu-latest
+      outputs:
+        should-build: ${{ steps.check.outputs.should-build }}
+        upstream-sha: ${{ steps.upstream.outputs.sha }}
+      steps:
+        - name: Get upstream latest commit
+          id: upstream
+          run: |
+            SHA=$(git ls-remote https://github.com/Voulk/QuestionablyEpic.git refs/heads/dev | awk '{print $1}')
+            echo "sha=$SHA" >> $GITHUB_OUTPUT
+            echo "Upstream SHA: $SHA"
+
+        - name: Compare with current image
+          id: check
+          run: |
+            LAST_SHA=$(skopeo inspect \
+              --creds="V4ldum:${{ secrets.GITHUB_TOKEN }}" \
+              "docker://ghcr.io/v4ldum/qe:latest" 2>/dev/null \
+              | jq -r '.Labels["upstream.sha"] // "none"') || LAST_SHA="none"
+            echo "Last built SHA: $LAST_SHA"
+            if [ "$LAST_SHA" == "${{ steps.upstream.outputs.sha }}" ]; then
+              echo "should-build=false" >> $GITHUB_OUTPUT
+              echo "No changes, skipping build."
+            else
+              echo "should-build=true" >> $GITHUB_OUTPUT
+              echo "New commit detected, will build."
+            fi
+
     build-and-push:
       runs-on: ubuntu-latest
+      needs: check-upstream
+      if: needs.check-upstream.outputs.should-build == 'true'
       steps:
         - name: Checkout repository
           uses: actions/checkout@v4
@@ -37,6 +68,8 @@ jobs:
           with:
               push: true
               platforms: linux/amd64
+              build-args: |
+                  UPSTREAM_SHA=${{ needs.check-upstream.outputs.upstream-sha }}
               tags: |
                       ghcr.io/v4ldum/${{ env.PROJECT }}:latest
                       ghcr.io/v4ldum/${{ env.PROJECT }}:${{ github.sha }}
@@ -51,7 +84,7 @@ jobs:
             uses: fscarmen/warp-on-actions@v1.3
             with:
                 stack: dual # Optional. Support [ ipv4, ipv6, dual ]. Default is dual.
-                mode: client # Optional. Support [ wireguard, client ]. Default is wireguard.
+                mode: client # Optional. Support [ wireguard, client ]. Default is client.
 
           - name: Checkout repository
             uses: actions/checkout@v4
