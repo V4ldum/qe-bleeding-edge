@@ -53,7 +53,7 @@ jobs:
         secrets: inherit
 
     deploy:
-        needs: [detect-changes, build]
+        needs: [check-upstream, build]
         if: >-
             always() &&
             (needs.build.result == 'success' ||
@@ -64,7 +64,7 @@ jobs:
         secrets: inherit
 
     cleanup:
-        needs: [detect-changes, build]
+        needs: [check-upstream, build]
         if: needs.build.result == 'success'
         uses: v4ldum/shared-workflows/.github/workflows/cleanup.yml@main
         with:
