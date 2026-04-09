@@ -19,6 +19,7 @@ jobs:
     check-upstream:
         runs-on: ubuntu-latest
         outputs:
+            project: ${{ env.PROJECT }}
             should-build: ${{ steps.check.outputs.should-build }}
             upstream-sha: ${{ steps.upstream.outputs.sha }}
         steps:
@@ -49,18 +50,15 @@ jobs:
         needs: check-upstream
         uses: v4ldum/shared-workflows/.github/workflows/build.yml@main
         with:
-            project: ${{ needs.detect-changes.outputs.project }}
+            project: ${{ needs.check-upstream.outputs.project }}
         secrets: inherit
 
     deploy:
         needs: [check-upstream, build]
-        if: >-
-            always() &&
-            (needs.build.result == 'success' ||
-             (needs.build.result == 'skipped' && needs.detect-changes.outputs.redeploy == 'true'))
+        if: needs.build.result == 'success'
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
         with:
-            project: ${{ needs.detect-changes.outputs.project }}
+            project: ${{ needs.check-upstream.outputs.project }}
         secrets: inherit
 
     cleanup:
@@ -68,5 +66,5 @@ jobs:
         if: needs.build.result == 'success'
         uses: v4ldum/shared-workflows/.github/workflows/cleanup.yml@main
         with:
-            project: ${{ needs.detect-changes.outputs.project }}
+            project: ${{ needs.check-upstream.outputs.project }}
         secrets: inherit
