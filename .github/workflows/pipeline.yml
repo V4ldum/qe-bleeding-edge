@@ -1,0 +1,72 @@
+name: pipeline
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: "15 3 * * *"
+
+permissions:
+    contents: read
+    packages: write
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    PROJECT: qe
+
+jobs:
+    check-upstream:
+        runs-on: ubuntu-latest
+        outputs:
+            should-build: ${{ steps.check.outputs.should-build }}
+            upstream-sha: ${{ steps.upstream.outputs.sha }}
+        steps:
+            - name: Get upstream latest commit
+              id: upstream
+              run: |
+                  SHA=$(git ls-remote https://github.com/Voulk/QuestionablyEpic.git refs/heads/dev | awk '{print $1}')
+                  echo "sha=$SHA" >> $GITHUB_OUTPUT
+                  echo "Upstream SHA: $SHA"
+
+            - name: Compare with current image
+              id: check
+              run: |
+                  LAST_SHA=$(skopeo inspect \
+                    --creds="V4ldum:${{ secrets.GITHUB_TOKEN }}" \
+                    "docker://ghcr.io/v4ldum/qe:latest" 2>/dev/null \
+                    | jq -r '.Labels["upstream.sha"] // "none"') || LAST_SHA="none"
+                  echo "Last built SHA: $LAST_SHA"
+                  if [ "$LAST_SHA" == "${{ steps.upstream.outputs.sha }}" ]; then
+                    echo "should-build=false" >> $GITHUB_OUTPUT
+                    echo "No changes, skipping build."
+                  else
+                    echo "should-build=true" >> $GITHUB_OUTPUT
+                    echo "New commit detected, will build."
+                  fi
+
+    build:
+        needs: check-upstream
+        uses: v4ldum/shared-workflows/.github/workflows/build.yml@main
+        with:
+            project: ${{ needs.detect-changes.outputs.project }}
+        secrets: inherit
+
+    deploy:
+        needs: [detect-changes, build]
+        if: >-
+            always() &&
+            (needs.build.result == 'success' ||
+             (needs.build.result == 'skipped' && needs.detect-changes.outputs.redeploy == 'true'))
+        uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
+        with:
+            project: ${{ needs.detect-changes.outputs.project }}
+        secrets: inherit
+
+    cleanup:
+        needs: [detect-changes, build]
+        if: needs.build.result == 'success'
+        uses: v4ldum/shared-workflows/.github/workflows/cleanup.yml@main
+        with:
+            project: ${{ needs.detect-changes.outputs.project }}
+        secrets: inherit
