@@ -13,5 +13,6 @@ services:
       - "traefik.http.routers.qe.rule=Host(`qe.valdum.dev`)"
 
 networks:
-  netv6:
-    external: true
+    netv6:
+        name: netv6
+        external: true
