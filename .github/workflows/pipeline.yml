@@ -79,15 +79,15 @@ jobs:
         needs: [check-upstream, build]
         if: needs.build.result == 'success'
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
+        secrets: inherit
         with:
             project: ${{ needs.check-upstream.outputs.project }}
             drain: true
-        secrets: inherit
 
     cleanup:
         needs: [check-upstream, build]
         if: needs.build.result == 'success'
         uses: v4ldum/shared-workflows/.github/workflows/cleanup.yml@main
+        secrets: inherit
         with:
             project: ${{ needs.check-upstream.outputs.project }}
-        secrets: inherit
