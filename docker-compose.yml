@@ -3,14 +3,14 @@ services:
     image: ghcr.io/v4ldum/qe:latest
     restart: unless-stopped
     networks:
-      - "netv6"
+      - netv6
     environment:
       - TZ=Europe/Paris
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.qe.tls=true"
-      - "traefik.http.routers.qe.entrypoints=websecure"
-      - "traefik.http.routers.qe.rule=Host(`qe.valdum.dev`)"
+      traefik.enable: true
+      traefik.http.routers.qe.tls: true
+      traefik.http.routers.qe.entrypoints: websecure
+      traefik.http.routers.qe.rule: Host(`qe.valdum.dev`)
 
 networks:
     netv6:
