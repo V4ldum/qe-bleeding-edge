@@ -3,7 +3,7 @@ WORKDIR /app
 ENV CI=false
 
 RUN apk add --no-cache git
-RUN git clone -b "Patch-12.1" https://github.com/Voulk/QuestionablyEpic .
+RUN git clone -b "dev" https://github.com/Voulk/QuestionablyEpic .
 RUN npm ci
 RUN npm run build
 
