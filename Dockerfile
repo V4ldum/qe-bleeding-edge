@@ -2,8 +2,10 @@ FROM node:14-alpine AS build
 WORKDIR /app
 ENV CI=false
 
+COPY upstream-branch /tmp/upstream-branch
+
 RUN apk add --no-cache git
-RUN git clone -b "Patch-12.1" https://github.com/Voulk/QuestionablyEpic .
+RUN git clone -b "$(tr -d '[:space:]' < /tmp/upstream-branch)" https://github.com/Voulk/QuestionablyEpic .
 RUN npm ci
 RUN npm run build
 
