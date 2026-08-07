@@ -26,7 +26,7 @@ jobs:
             - name: Get upstream latest commit
               id: upstream
               run: |
-                  SHA=$(git ls-remote https://github.com/Voulk/QuestionablyEpic.git refs/heads/dev | awk '{print $1}')
+                  SHA=$(git ls-remote https://github.com/Voulk/QuestionablyEpic.git refs/heads/Patch-12.1 | awk '{print $1}')
                   echo "sha=$SHA" >> $GITHUB_OUTPUT
                   echo "Upstream SHA: $SHA"
 
