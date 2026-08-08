@@ -16,46 +16,46 @@ env:
     PROJECT: qe
 
 jobs:
-    #check-upstream:
-    #    runs-on: ubuntu-latest
-    #    outputs:
-    #        project: ${{ env.PROJECT }}
-    #        should-build: ${{ steps.check.outputs.should-build }}
-    #        upstream-sha: ${{ steps.upstream.outputs.sha }}
-    #    steps:
-    #        - name: Checkout repository
-    #          uses: actions/checkout@v7
+    check-upstream:
+        runs-on: ubuntu-latest
+        outputs:
+            project: ${{ env.PROJECT }}
+            should-build: ${{ steps.check.outputs.should-build }}
+            upstream-sha: ${{ steps.upstream.outputs.sha }}
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v7
 
-    #        - name: Get upstream latest commit
-    #          id: upstream
-    #          shell: bash # enables -o pipefail so ls-remote failures aren't masked by awk
-    #          run: |
-    #              BRANCH=$(tr -d '[:space:]' < upstream-branch)
-    #              SHA=$(git ls-remote --exit-code https://github.com/Voulk/QuestionablyEpic.git "refs/heads/$BRANCH" | awk '{print $1}')
-    #              echo "sha=$SHA" >> $GITHUB_OUTPUT
-    #              echo "Upstream branch: $BRANCH"
-    #              echo "Upstream SHA: $SHA"
+            - name: Get upstream latest commit
+              id: upstream
+              shell: bash # enables -o pipefail so ls-remote failures aren't masked by awk
+              run: |
+                  BRANCH=$(tr -d '[:space:]' < upstream-branch)
+                  SHA=$(git ls-remote --exit-code https://github.com/Voulk/QuestionablyEpic.git "refs/heads/$BRANCH" | awk '{print $1}')
+                  echo "sha=$SHA" >> $GITHUB_OUTPUT
+                  echo "Upstream branch: $BRANCH"
+                  echo "Upstream SHA: $SHA"
 
-    #        - name: Compare with current image
-    #          id: check
-    #          run: |
-    #              LAST_SHA=$(skopeo inspect \
-    #                --creds="V4ldum:${{ secrets.GITHUB_TOKEN }}" \
-    #                "docker://ghcr.io/v4ldum/qe:latest" 2>/dev/null \
-    #                | jq -r '.Labels["upstream.sha"] // "none"') || LAST_SHA="none"
-    #              echo "Last built SHA: $LAST_SHA"
-    #              if [ "$LAST_SHA" == "${{ steps.upstream.outputs.sha }}" ]; then
-    #                echo "should-build=false" >> $GITHUB_OUTPUT
-    #                echo "No changes, skipping build."
-    #              else
-    #                echo "should-build=true" >> $GITHUB_OUTPUT
-    #                echo "New commit detected, will build."
-    #              fi
+            - name: Compare with current image
+              id: check
+              run: |
+                  LAST_SHA=$(skopeo inspect \
+                    --creds="V4ldum:${{ secrets.GITHUB_TOKEN }}" \
+                    "docker://ghcr.io/v4ldum/qe:latest" 2>/dev/null \
+                    | jq -r '.Labels["upstream.sha"] // "none"') || LAST_SHA="none"
+                  echo "Last built SHA: $LAST_SHA"
+                  if [ "$LAST_SHA" == "${{ steps.upstream.outputs.sha }}" ]; then
+                    echo "should-build=false" >> $GITHUB_OUTPUT
+                    echo "No changes, skipping build."
+                  else
+                    echo "should-build=true" >> $GITHUB_OUTPUT
+                    echo "New commit detected, will build."
+                  fi
 
     build:
         runs-on: ubuntu-latest
-        #needs: check-upstream
-        #if: needs.check-upstream.outputs.should-build == 'true'
+        needs: check-upstream
+        if: needs.check-upstream.outputs.should-build == 'true'
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -83,19 +83,19 @@ jobs:
                       ghcr.io/v4ldum/${{ env.PROJECT }}:latest
                       ghcr.io/v4ldum/${{ env.PROJECT }}:${{ github.sha }}
 
-    #deploy:
-    #    needs: [check-upstream, build]
-    #    if: needs.build.result == 'success'
-    #    uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
-    #    secrets: inherit
-    #    with:
-    #        project: ${{ needs.check-upstream.outputs.project }}
-    #        drain: true
+    deploy:
+        needs: [check-upstream, build]
+        if: needs.build.result == 'success'
+        uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
+        secrets: inherit
+        with:
+            project: ${{ needs.check-upstream.outputs.project }}
+            drain: true
 
-    #cleanup:
-    #    needs: [check-upstream, build]
-    #    if: needs.build.result == 'success'
-    #    uses: v4ldum/shared-workflows/.github/workflows/cleanup.yml@main
-    #    secrets: inherit
-    #    with:
-    #        project: ${{ needs.check-upstream.outputs.project }}
+    cleanup:
+        needs: [check-upstream, build]
+        if: needs.build.result == 'success'
+        uses: v4ldum/shared-workflows/.github/workflows/cleanup.yml@main
+        secrets: inherit
+        with:
+            project: ${{ needs.check-upstream.outputs.project }}
