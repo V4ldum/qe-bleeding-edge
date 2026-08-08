@@ -2,6 +2,11 @@ services:
   qe:
     image: ghcr.io/v4ldum/qe:latest
     restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp
     networks:
       - netv6
     environment:
