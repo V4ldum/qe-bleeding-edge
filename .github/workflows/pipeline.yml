@@ -96,7 +96,6 @@ jobs:
         secrets: inherit
         with:
             project: ${{ needs.check-upstream.outputs.project }}
-            drain: true
 
     cleanup:
         needs: [check-upstream, build]
