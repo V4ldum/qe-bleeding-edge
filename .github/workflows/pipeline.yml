@@ -8,6 +8,7 @@ on:
 permissions:
     contents: read
     packages: write
+    id-token: write
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -94,6 +95,8 @@ jobs:
         if: needs.build.result == 'success'
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
         secrets: inherit
+        with:
+            project: ${{ needs.check-upstream.outputs.project }}
 
     cleanup:
         needs: [check-upstream, build]
