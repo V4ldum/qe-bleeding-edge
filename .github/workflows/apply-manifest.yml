@@ -17,12 +17,6 @@ concurrency:
 
 jobs:
     deploy:
-        needs: [detect-changes, build]
-        if: >-
-            !cancelled() && !failure() &&
-            (needs.build.result == 'success' ||
-              needs.build.result == 'skipped' &&
-                needs.detect-changes.outputs.deploy == 'true')
         uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
         secrets: inherit
         with:
