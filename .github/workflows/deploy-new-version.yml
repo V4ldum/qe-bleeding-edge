@@ -1,4 +1,4 @@
-name: CI/CD
+name: Deploy
 on:
     workflow_dispatch:
     schedule:
@@ -97,6 +97,10 @@ jobs:
         secrets: inherit
         with:
             project: ${{ needs.check-upstream.outputs.project }}
+            # This pipeline file will only build a new version if changes are detected upstream
+            # It won't be triggered on changes to the manifest, no need to apply changes ever
+            apply: false
+            rollout: true
 
     cleanup:
         needs: [check-upstream, build]

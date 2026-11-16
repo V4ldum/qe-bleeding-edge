@@ -1,0 +1,33 @@
+name: Apply
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - "main"
+        paths:
+            - kubernetes.yml
+
+permissions:
+    contents: read
+    id-token: write
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    deploy:
+        needs: [detect-changes, build]
+        if: >-
+            !cancelled() && !failure() &&
+            (needs.build.result == 'success' ||
+              needs.build.result == 'skipped' &&
+                needs.detect-changes.outputs.deploy == 'true')
+        uses: v4ldum/shared-workflows/.github/workflows/deploy.yml@main
+        secrets: inherit
+        with:
+            project: qe
+            # This pipeline file will only ever trigger when changes are pushed to the manifest
+            # No need to trigger a rollout
+            apply: true
+            rollout: false
