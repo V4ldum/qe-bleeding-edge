@@ -5,11 +5,6 @@ on:
         - cron: "15 5 * * *"
           timezone: "Europe/Paris"
 
-permissions:
-    contents: read
-    packages: write
-    id-token: write
-
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
@@ -20,6 +15,8 @@ env:
 jobs:
     check-upstream:
         runs-on: ubuntu-latest
+        permissions:
+            contents: read
         outputs:
             project: ${{ env.PROJECT }}
             should-build: ${{ steps.check.outputs.should-build }}
@@ -63,6 +60,9 @@ jobs:
         runs-on: ubuntu-latest
         needs: check-upstream
         if: needs.check-upstream.outputs.should-build == 'true'
+        permissions:
+            contents: read
+            packages: write
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -101,6 +101,9 @@ jobs:
             # It won't be triggered on changes to the manifest, no need to apply changes ever
             apply: false
             rollout: true
+        permissions:
+            contents: read
+            id-token: write
 
     cleanup:
         needs: [check-upstream, build]
@@ -109,3 +112,5 @@ jobs:
         secrets: inherit
         with:
             project: ${{ needs.check-upstream.outputs.project }}
+        permissions:
+            packages: write
