@@ -1,4 +1,4 @@
-name: Apply
+name: Apply Manifest
 on:
     workflow_dispatch:
     push:
@@ -6,11 +6,6 @@ on:
             - "main"
         paths:
             - kubernetes.yml
-
-permissions:
-    contents: read
-    id-token: write
-
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: true
@@ -25,3 +20,6 @@ jobs:
             # No need to trigger a rollout
             apply: true
             rollout: false
+        permissions:
+            contents: read
+            id-token: write
