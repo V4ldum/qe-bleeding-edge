@@ -79,6 +79,13 @@ spec:
                   - name: TZ
                     value: Europe/Paris
 
+                securityContext:
+                    allowPrivilegeEscalation: false
+                    runAsNonRoot: true
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                        drop: ["ALL"]
+
                 startupProbe:
                     periodSeconds: 1
                     failureThreshold: 10
@@ -90,3 +97,13 @@ spec:
                     httpGet:
                         path: /
                         port: http-in
+
+                volumeMounts:
+                  - name: tmp
+                    mountPath: /tmp
+
+            volumes:
+              - name: tmp
+                emptyDir:
+                    medium: Memory
+                    sizeLimit: 1Mi
